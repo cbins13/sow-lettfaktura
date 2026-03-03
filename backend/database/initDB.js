@@ -1,12 +1,18 @@
 import fastifyPlugin from 'fastify-plugin';
-import postgres from '@fastify/postgres';
+import { Pool } from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const pool = new Pool({
+  connectionString: process.env.CONNECTION_STRING,
+});
+
 async function dbConnector(fastify, options) {
-    fastify.register(postgres, {
-        connectionString: process.env.CONNECTION_STRING
-    });
+  fastify.decorate('pgPool', pool);
+
+  fastify.addHook('onClose', async () => {
+    await pool.end();
+  });
 }
 
 export default fastifyPlugin(dbConnector);
